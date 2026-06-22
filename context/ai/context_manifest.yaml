@@ -17,6 +17,7 @@ recommended_read_order:
   - plans/repository_structure.md
   - plans/delivery_sequence.md
   - plans/sop_automation_pattern.md
+  - plans/sop_in_place_minor_update_pattern.md
   - plans/open_questions.md
 
 constraints:

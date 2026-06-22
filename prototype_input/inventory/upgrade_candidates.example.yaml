@@ -37,3 +37,24 @@ assets:
     tags:
       platform_standard: mariadb1011_target
       cost_center: cc-4100
+  - asset_id: test-gateway
+    provider: aws
+    service_type: rds
+    engine: mariadb
+    engine_version: "10.11.16"
+    engine_major: "10.11"
+    resource_id: arn:aws:rds:us-east-2:226344076232:db:test-gateway
+    account_id: "226344076232"
+    region: us-east-2
+    environment: test
+    owner_team: cloud-operations
+    business_service: punchout-gateway
+    criticality: low
+    topology_summary:
+      deployment_model: single_primary_with_read_replica
+      read_replicas: 1
+      blue_green_candidate: false
+    tags:
+      jira_ref: CLOPS-4564
+      prototype_target_version: "10.11.18"
+      execution_pattern: in_place_minor_update
