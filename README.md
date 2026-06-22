@@ -30,4 +30,5 @@ Recommended read order:
 11. `plans/repository_structure.md`
 12. `plans/delivery_sequence.md`
 13. `plans/sop_automation_pattern.md`
-14. `plans/open_questions.md`
+14. `plans/sop_in_place_minor_update_pattern.md`
+15. `plans/open_questions.md`

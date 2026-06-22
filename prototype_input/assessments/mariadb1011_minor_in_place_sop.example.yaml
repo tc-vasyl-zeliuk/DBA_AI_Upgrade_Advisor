@@ -1,0 +1,28 @@
+scenario_id: mariadb1011-minor-in-place-sop
+run_date: "2026-06-22"
+jira_ref: CLOPS-4564
+sop_ref: https://tradecentric.atlassian.net/wiki/spaces/OP/pages/3457777667
+asset_ref: ../inventory/upgrade_candidates.example.yaml#assets[2]
+source_policy_ref: ../lifecycle/lifecycle_policies.example.yaml#policies[4]
+expected_assessment:
+  assessment_type: routine_minor_patch
+  support_phase: standard_support
+  lifecycle_urgency: low
+  patch_hygiene_urgency: medium
+  execution_pattern: in_place_minor_update
+  preferred_cutover_method: aws_cli_modify_db_instance
+  apply_immediately: true
+  replica_first_ordering: true
+  terraform_change_required: false
+  source_engine_version: "10.11.16"
+  target_engine_version: "10.11.18"
+  must_include_findings:
+    - validate_valid_upgrade_target
+    - apply_to_replica_before_primary
+    - confirm_no_engine_version_pin_in_terraform
+    - confirm_dbinstancestatus_available_post_upgrade
+    - verify_select_version_returns_target_on_primary
+    - capture_validation_evidence_on_jira_ticket
+  optional_findings_for_prod:
+    - create_manual_named_snapshot_of_primary
+    - consider_reboot_with_forced_failover_for_multi_az_cross_region
