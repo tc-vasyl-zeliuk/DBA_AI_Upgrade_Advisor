@@ -101,16 +101,16 @@ The prototype should model this scenario as both:
 - Governing Jira: CLOPS-4564 ([TEST] Minor upgrade of MariaDB RDS from 10.11.16 to 10.11.18).
 - Environment: TEST tier, region `us-east-2`.
 - Instances in scope: `test-gateway` (primary, `db.t4g.micro`) and `test-gateway-replica` (read replica, `db.t4g.micro`).
-- Latest supported MariaDB 10.11 minor per `AWS_Maintenance_Automation/rds/get-latest-rds-version.sh` is `10.11.18`.
+- Latest supported MariaDB 10.11 minor is `10.11.18`, as reported by the external `AWS_Maintenance_Automation/rds/get-latest-rds-version.sh` helper (lives in the separate `AWS_Maintenance_Automation` repo and wraps `aws rds describe-db-engine-versions`, which is the authoritative source).
 - `engine_version` is not pinned in Terraform for these MariaDB instances (per `terraform-module-db-access-patterns` notes); no IaC PR is required for the change itself.
 - RDS for MariaDB 10.11 standard support ends 2027-02-28 (see `prototype_input/lifecycle/lifecycle_policies.example.yaml#rds-mariadb-10-11`).
-- AWS RDS replicates the primary's engine version to read replicas on in-place minor upgrades.
+- For an in-place minor upgrade, the SOP requires applying the change to read replicas before the primary and explicitly verifying each replica's engine version after the upgrade.
 - Confluence SOP: `https://tradecentric.atlassian.net/wiki/spaces/OP/pages/3457777667` (AWS RDS Minor Update, v1.3).
 
 ### Inferences
 - This is a routine currency / patch case, not a deadline-driven remediation. Urgency from a lifecycle standpoint is low; urgency from a vulnerability / patch hygiene standpoint is medium.
 - The right execution pattern is `in_place_minor_update` (see `plans/sop_in_place_minor_update_pattern.md`), not `blue_green_hybrid_iac`.
-- Replica-first ordering applies. TEST is the leading tier in the TEST -> QUALITY -> PROD promotion chain modelled via Jira `Blocks` links.
+- Replica-first ordering applies. TEST is the leading tier in the TEST -> QUALITY -> PROD promotion chain modeled via Jira `Blocks` links.
 
 ### Required control points
 - Confirm `AWS_PROFILE=test` and account `226344076232` before any `--apply-immediately` action.

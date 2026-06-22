@@ -12,7 +12,7 @@ Use a CLI-driven, in-place update pattern for RDS minor version and operating sy
 ### Facts
 - AWS RDS supports applying pending maintenance actions (`system-update`, `db-upgrade`) on a single DB instance through `aws rds apply-pending-maintenance-action`.
 - AWS RDS supports on-demand minor engine version upgrades through `aws rds modify-db-instance --engine-version <target> --apply-immediately`.
-- Read replicas inherit the primary's engine version automatically after an in-place minor upgrade. AWS guidance is to apply the maintenance action to the replica first, then the primary.
+- When a primary has read replicas, AWS guidance is to apply the maintenance action to the replica first, then the primary. Replica engine versions must be confirmed against the target after the upgrade, not assumed.
 - Multi-AZ instances with cross-region replication may incur additional cost during a minor update; a reboot with forced failover is a documented mitigation when standby placement matters.
 - PROD-tier instances require an explicit manual snapshot as a named restore point, independent of automated backup retention.
 - The MariaDB instances currently in scope (for example `test-gateway`, `test-gateway-replica`) do not pin `engine_version` in Terraform.
@@ -48,8 +48,8 @@ Use a CLI-driven, in-place update pattern for RDS minor version and operating sy
 ### 1. Precheck stage
 - confirm AWS CLI v2 is installed on the operator machine
 - confirm the correct `AWS_PROFILE` for the target tier (`test`, `quality`, `prod`, `cicd`)
-- list pending maintenance actions for the tier: `./rds-pending-maintenance.sh <tier>`
-- list current engine versions and latest supported minors: `./rds-inventory.sh <tier>` and `./get-latest-rds-version.sh <tier>`
+- list pending maintenance actions for the tier: `AWS_Maintenance_Automation/inventory/rds-pending-maintenance.sh <tier>` (script lives in the separate `AWS_Maintenance_Automation` repository)
+- list current engine versions and latest supported minors: `AWS_Maintenance_Automation/inventory/rds-inventory.sh <tier>` and `AWS_Maintenance_Automation/rds/get-latest-rds-version.sh <tier>` (same external repo)
 - confirm the topology (single primary, primary plus replicas, Multi-AZ, cross-region replication)
 - decide whether the change is `system-update` (pending), `db-upgrade` (pending), or an on-demand minor upgrade
 
@@ -64,7 +64,7 @@ Use a CLI-driven, in-place update pattern for RDS minor version and operating sy
 - for an on-demand minor upgrade: `aws rds modify-db-instance --db-instance-identifier <id> --engine-version <target-minor> --apply-immediately`
 
 ### 4. Validate stage
-- poll instance status: `aws rds describe-db-instances --db-instance-identifier <id> --query "DBInstances[0].{Status:DBInstanceStatus,PendingMaintenance:PendingModifiedValues}" --output table`
+- poll instance status: `aws rds describe-db-instances --db-instance-identifier <id> --query "DBInstances[0].{Status:DBInstanceStatus,PendingModifiedValues:PendingModifiedValues}" --output table`
 - confirm `DBInstanceStatus = available` on every affected instance
 - confirm engine version matches the target on the primary (and replicas, for on-demand minor upgrades)
 - run an application smoke test against the instance endpoint
@@ -89,13 +89,15 @@ Use a CLI-driven, in-place update pattern for RDS minor version and operating sy
 
 ## Minimal CLI surface for the workflow
 
+The inventory helpers below live in the separate `AWS_Maintenance_Automation` repository, not in this repo. Paths are shown relative to that repo's root.
+
 ```bash
 # Discover pending maintenance per tier
-./rds-pending-maintenance.sh <tier>
+AWS_Maintenance_Automation/inventory/rds-pending-maintenance.sh <tier>
 
 # Discover current and latest minor per engine major
-./rds-inventory.sh <tier>
-./get-latest-rds-version.sh <tier>
+AWS_Maintenance_Automation/inventory/rds-inventory.sh <tier>
+AWS_Maintenance_Automation/rds/get-latest-rds-version.sh <tier>
 
 # Apply a pending maintenance action immediately
 aws rds apply-pending-maintenance-action \
@@ -112,7 +114,7 @@ aws rds modify-db-instance \
 # Status check
 aws rds describe-db-instances \
   --db-instance-identifier <db-instance-id> \
-  --query "DBInstances[0].{Status:DBInstanceStatus,PendingMaintenance:PendingModifiedValues}" \
+  --query "DBInstances[0].{Status:DBInstanceStatus,PendingModifiedValues:PendingModifiedValues}" \
   --output table
 ```
 
