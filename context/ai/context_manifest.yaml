@@ -1,0 +1,25 @@
+seed_context:
+  file: ai-upgrade-advisor-codex-context.md
+  role: seed_document
+
+recommended_read_order:
+  - context/product/product_brief.md
+  - context/product/value_proposition.md
+  - context/product/scope_and_non_goals.md
+  - context/product/user_and_decision_views.md
+  - context/domain/capability_map.md
+  - context/domain/reference_upgrade_scenarios.md
+  - context/domain/logical_architecture.md
+  - context/domain/data_model.md
+  - context/domain/policy_and_scoring.md
+  - context/domain/ai_reasoning_and_workflow.md
+  - context/ai/assistant_operating_contract.md
+  - plans/repository_structure.md
+  - plans/delivery_sequence.md
+  - plans/sop_automation_pattern.md
+  - plans/open_questions.md
+
+constraints:
+  - Keep scope focused on upgrade governance and decision support.
+  - Treat vendor facts as refreshable sources, not permanently hard-coded truths.
+  - Keep implementation stack decisions explicit and reversible.

@@ -1,0 +1,37 @@
+assessment_id: asm-test-ops-windmill-us-east-2-postgres-01-20260427
+asset_id: test-ops-windmill-us-east-2-postgres-01
+source_lifecycle_policy_id: rds-postgresql-17
+target_lifecycle_policy_id: rds-postgresql-18
+assessed_at: "2026-04-27T09:00:00Z"
+assessment_type: proactive_major_upgrade
+current_support_phase: standard_support
+lifecycle_urgency: low
+delivery_urgency: low
+recommended_target_version: "18.3"
+target_version_status: direct_supported_in_validated_environment
+overall_priority_score: 4
+confidence_score: 0.91
+findings:
+  - category: lifecycle
+    severity: low
+    title: PostgreSQL 17 remains in standard support
+    detail: Support lifecycle does not force an immediate upgrade because PostgreSQL 17 standard support ends on 2030-02-28.
+    evidence:
+      - source_url: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
+  - category: upgrade_target
+    severity: low
+    title: PostgreSQL 18.3 is a confirmed direct major upgrade target in the validated environment
+    detail: User validation on 2026-04-27 showed `17.8` can upgrade directly to `18.2` or `18.3`, with `18.3` preferred as the newer supported minor target.
+  - category: scope
+    severity: low
+    title: Prototype asset is explicitly a test-tier instance
+    detail: The concrete prototype instance provided by the user is `test-ops-windmill-us-east-2-postgres-01` in the `test` tier, so this case is suitable for rehearsal and compatibility validation rather than urgent production remediation.
+  - category: execution
+    severity: medium
+    title: Blue/green major upgrade would use logical replication
+    detail: DDL and DCL changes on the blue environment are not replicated to green during logical replication-based blue/green upgrades.
+recommendations:
+  - use 18.3 as the default target for the prototype proposal
+  - create a PostgreSQL 18 parameter group
+  - validate extension compatibility and update requirements
+  - certify application drivers and ORM behavior on PostgreSQL 18

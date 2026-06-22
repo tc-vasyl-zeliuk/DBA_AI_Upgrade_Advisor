@@ -1,0 +1,17 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# Local Python artifacts if Python is chosen later
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Generated working files
+tmp/
+*.tmp

@@ -1,0 +1,61 @@
+policies:
+  - policy_id: rds-postgresql-17
+    service_type: rds
+    engine: postgresql
+    major_version: "17"
+    standard_support_end: "2030-02-28"
+    extended_support_start: "2030-03-01"
+    extended_support_end: "2033-02-28"
+    recommended_target_version: "18"
+    source_url: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
+    source_refreshed_at: "2026-04-27"
+  - policy_id: rds-postgresql-18
+    service_type: rds
+    engine: postgresql
+    major_version: "18"
+    standard_support_end: "2031-02-28"
+    extended_support_start: "2032-03-01"
+    extended_support_end: "2034-02-28"
+    recommended_target_version: null
+    source_url: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
+    source_refreshed_at: "2026-04-27"
+  - policy_id: rds-postgresql-13
+    service_type: rds
+    engine: postgresql
+    major_version: "13"
+    standard_support_end: "2026-02-28"
+    extended_support_start: "2026-03-01"
+    extended_support_end: null
+    recommended_target_version: "14"
+    source_url: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
+    source_refreshed_at: "2026-04-17"
+  - policy_id: rds-mariadb-10-6
+    service_type: rds
+    engine: mariadb
+    major_version: "10.6"
+    standard_support_end: "2026-07-31"
+    extended_support_start: null
+    extended_support_end: null
+    recommended_target_version: "10.11"
+    source_url: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MariaDB.Concepts.VersionMgmt.html
+    source_refreshed_at: "2026-04-27"
+  - policy_id: rds-mariadb-10-11
+    service_type: rds
+    engine: mariadb
+    major_version: "10.11"
+    standard_support_end: "2027-02-28"
+    extended_support_start: null
+    extended_support_end: null
+    recommended_target_version: "11.4"
+    source_url: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MariaDB.Concepts.VersionMgmt.html
+    source_refreshed_at: "2026-04-27"
+  - policy_id: elasticache-redis-oss-5
+    service_type: elasticache
+    engine: redis-oss
+    major_version: "5"
+    standard_support_end: "2026-01-31"
+    extended_support_start: "2026-02-01"
+    extended_support_end: "2029-01-31"
+    recommended_target_version: "7"
+    source_url: https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/extended-support-versions.html
+    source_refreshed_at: "2026-04-17"

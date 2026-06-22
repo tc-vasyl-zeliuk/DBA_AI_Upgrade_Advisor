@@ -1,0 +1,18 @@
+scenario_id: postgres17-to-18-proactive-major-upgrade
+run_date: "2026-04-27"
+asset_ref: ../inventory/upgrade_candidates.example.yaml#assets[0]
+source_policy_ref: ../lifecycle/lifecycle_policies.example.yaml#policies[0]
+target_policy_ref: ../lifecycle/lifecycle_policies.example.yaml#policies[1]
+expected_assessment:
+  assessment_type: proactive_major_upgrade
+  support_phase: standard_support
+  lifecycle_urgency: low
+  delivery_urgency: low
+  target_version_status: direct_supported_in_validated_environment
+  recommended_target_version: "18.3"
+  must_include_findings:
+    - direct_upgrade_target_confirmed
+    - 18_2_and_18_3_are_both_valid_targets
+    - prototype_instance_is_test_tier
+    - validate_extensions_and_parameter_group
+    - logical_replication_constraints_if_blue_green

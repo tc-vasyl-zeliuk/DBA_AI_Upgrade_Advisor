@@ -1,0 +1,13 @@
+scenario_id: postgres13-production-extended-support
+run_date: "2026-04-17"
+asset_ref: ../inventory/asset_inventory.example.yaml#assets[0]
+policy_ref: ../lifecycle/lifecycle_policies.example.yaml#policies[0]
+expected_assessment:
+  support_phase: extended_support
+  days_to_standard_support_end: -48
+  extended_support_cost_risk: high
+  overall_priority_band: high
+  must_include_findings:
+    - avoidable_extended_support_cost
+    - production_upgrade_required
+    - validate_extensions_and_parameter_groups

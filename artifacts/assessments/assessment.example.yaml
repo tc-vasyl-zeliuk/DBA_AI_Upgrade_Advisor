@@ -1,0 +1,28 @@
+assessment_id: asm-rds-prod-orders-pg13-20260417
+asset_id: rds-prod-orders-pg13
+lifecycle_policy_id: rds-postgresql-13
+assessed_at: "2026-04-17T09:00:00Z"
+support_phase: extended_support
+days_to_standard_support_end: -48
+days_to_extended_support_end: null
+extended_support_cost_risk: high
+upgrade_complexity_score: 3
+business_priority_score: 5
+overall_priority_score: 9
+confidence_score: 0.86
+findings:
+  - category: support
+    severity: high
+    title: PostgreSQL 13 is in Extended Support
+    detail: Standard support ended on 2026-02-28 and Extended Support began on 2026-03-01.
+    evidence:
+      - source_url: https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html
+  - category: cost
+    severity: high
+    title: Asset is likely incurring avoidable support cost
+    detail: Upgrade deferral increases Extended Support exposure.
+recommendations:
+  - validate extension compatibility
+  - review parameter group differences for target major version
+  - confirm application driver compatibility
+  - schedule non-production rehearsal before production change window

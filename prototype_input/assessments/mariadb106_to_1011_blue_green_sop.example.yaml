@@ -1,0 +1,16 @@
+scenario_id: mariadb106-to-1011-blue-green-sop
+run_date: "2026-04-27"
+asset_ref: ../inventory/upgrade_candidates.example.yaml#assets[1]
+source_policy_ref: ../lifecycle/lifecycle_policies.example.yaml#policies[3]
+target_policy_ref: ../lifecycle/lifecycle_policies.example.yaml#policies[4]
+expected_assessment:
+  assessment_type: deadline_driven_major_upgrade
+  support_phase: standard_support
+  lifecycle_urgency: medium
+  execution_pattern: blue_green_hybrid_iac
+  preferred_cutover_method: rds_blue_green_deployment
+  must_include_findings:
+    - create_target_parameter_group
+    - validate_valid_upgrade_target
+    - replica_topology_copied_to_green
+    - terraform_requires_post_cutover_reconciliation

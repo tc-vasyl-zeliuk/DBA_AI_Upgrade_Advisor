@@ -1,0 +1,39 @@
+assets:
+  - asset_id: test-ops-windmill-us-east-2-postgres-01
+    provider: aws
+    service_type: rds
+    engine: postgresql
+    engine_version: "17.8"
+    engine_major: "17"
+    resource_id: test-ops-windmill-us-east-2-postgres-01
+    account_id: null
+    region: null
+    environment: test
+    owner_team: null
+    business_service: null
+    criticality: null
+    topology_summary:
+      deployment_model: null
+      read_replicas: null
+    tags:
+      validation_profile: test
+      prototype_target_version: "18.3"
+  - asset_id: rds-quality-orders-mariadb-106
+    provider: aws
+    service_type: rds
+    engine: mariadb
+    engine_version: "10.6.25"
+    engine_major: "10.6"
+    account_id: "123456789012"
+    region: us-east-1
+    environment: quality
+    owner_team: commerce-platform
+    business_service: order-processing
+    criticality: medium
+    topology_summary:
+      deployment_model: single_primary_with_read_replica
+      read_replicas: 1
+      blue_green_candidate: true
+    tags:
+      platform_standard: mariadb1011_target
+      cost_center: cc-4100
