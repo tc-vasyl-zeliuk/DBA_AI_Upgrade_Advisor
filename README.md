@@ -32,4 +32,5 @@ Recommended read order:
 13. `plans/delivery_sequence.md`
 14. `plans/sop_automation_pattern.md`
 15. `plans/sop_in_place_minor_update_pattern.md`
-16. `plans/open_questions.md`
+16. `plans/sop_in_place_major_upgrade_via_terraform_pattern.md`
+17. `plans/open_questions.md`

@@ -58,3 +58,28 @@ assets:
       jira_ref: CLOPS-4564
       prototype_target_version: "10.11.18"
       execution_pattern: in_place_minor_update
+  - asset_id: test-ops-windmill-us-east-2-postgres-01-major
+    provider: aws
+    service_type: rds
+    engine: postgresql
+    engine_version: "17.9"
+    engine_major: "17"
+    resource_id: arn:aws:rds:us-east-2:226344076232:db:test-ops-windmill-us-east-2-postgres-01
+    account_id: "226344076232"
+    region: us-east-2
+    environment: test
+    owner_team: cloud-operations
+    business_service: windmill
+    criticality: low
+    topology_summary:
+      deployment_model: single_primary
+      read_replicas: 0
+      blue_green_candidate: false
+    tags:
+      jira_ref: CLOPS-4563
+      prototype_target_version: "18.4"
+      execution_pattern: in_place_major_upgrade_via_terraform
+      iac_pinned_engine_version: true
+      terraform_repo: PunchOut2Go/Terraform_Windmill
+      terraform_path: environments/test/main.tf
+      terraform_module: github.com/PunchOut2Go/Terraform_Modules.git//databases/postgres?ref=v1.3.8

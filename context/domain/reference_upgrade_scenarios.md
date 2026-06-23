@@ -124,3 +124,36 @@ The prototype should model this scenario as:
 - a routine-patch finding (not deadline-driven)
 - an `in_place_minor_update` execution pattern with `replica_first_ordering=true`
 - a Jira `[System] Change` per tier, linked by `Blocks` for tier promotion
+
+## Scenario 4: RDS for PostgreSQL 17.9 to 18.4 in-place major upgrade via Terraform (single-instance, TEST)
+
+### Facts
+- Governing Jira: CLOPS-4563 ([TEST] Major upgrade of PostgreSQL RDS from 17.9 to 18.4).
+- Environment: TEST tier, account `226344076232`, region `us-east-2`.
+- Instance in scope: `test-ops-windmill-us-east-2-postgres-01` (`db.t3.micro`, single-AZ, no replicas, `BackupRetentionPeriod=7`, `DeletionProtection=true`).
+- Current engine version: `17.9`. Current parameter group: `test-ops-windmill-us-east-2-postgres-01-postgres17`, `ParameterApplyStatus=in-sync`.
+- Target engine version `18.4` is a valid `IsMajorVersionUpgrade=true` target from `17.9` per `aws rds describe-db-engine-versions`.
+- `engine_version` is pinned in Terraform at `Terraform_Windmill/environments/test/main.tf`, calling `module "database"` with `source = "github.com/PunchOut2Go/Terraform_Modules.git//databases/postgres?ref=v1.3.8"`.
+- The shared `databases/postgres` module derives `local.major_version = split(".", var.engine_version)[0]` and creates `aws_db_parameter_group.postgres_pg` with `family = "postgres${local.major_version}"`, using `create_before_destroy = true`.
+- The module exposes `allow_major_version_upgrade` (default `false`); the current TEST main.tf does not set it.
+- No Confluence SOP currently exists for PostgreSQL major upgrades; the governing pattern document is `plans/sop_in_place_major_upgrade_via_terraform_pattern.md`.
+
+### Inferences
+- This is a routine currency upgrade, not a deadline-driven remediation; 17.9 is not at end of support at the time of the change.
+- The right execution pattern is `in_place_major_upgrade_via_terraform` (see `plans/sop_in_place_major_upgrade_via_terraform_pattern.md`), not `blue_green_hybrid_iac` (no replica / Multi-AZ topology to preserve) and not `in_place_minor_update` (engine version is IaC-pinned and the major bump requires the `allow_major_version_upgrade` toggle).
+- The parameter group family flip (`postgres17` to `postgres18`) is the module's responsibility within the same apply; no separate parameter group resource needs to be added to the environment main.tf.
+- The same PR that changes `engine_version` to `18.4` must also set `allow_major_version_upgrade = true`, otherwise the AWS apply will fail. Resetting it back to `false` post-upgrade is a hardening choice, not a correctness requirement.
+
+### Required control points
+- Confirm `AWS_PROFILE=test` and account `226344076232` before any state-changing action.
+- Confirm `18.4` is in the `ValidUpgradeTarget` list for current source `17.9` with `IsMajorVersionUpgrade=true`.
+- Take a manual pre-upgrade snapshot named `clops-4563-pre-upgrade-<UTC-timestamp>` and wait for `available` before opening the apply window.
+- The Terraform PR must include exactly two functional edits in `environments/test/main.tf`: `engine_version = "18.4"` and `allow_major_version_upgrade = true`. No parameter group changes.
+- The `terraform plan` must show: new parameter group create, instance update (engine_version, parameter group attachment, `allow_major_version_upgrade`), old parameter group destroy. Anything additional must be reconciled before apply.
+- Validation: `DBInstanceStatus=available`, `EngineVersion=18.4`, parameter group `...-postgres18` attached with `ParameterApplyStatus=in-sync`, `SELECT version();` reports PostgreSQL 18.4, post-apply `terraform plan` is a no-op.
+
+### Working product implication
+The prototype should model this scenario as:
+- a routine-currency finding (not deadline-driven)
+- an `in_place_major_upgrade_via_terraform` execution pattern with `iac_pinned_engine_version=true`, `allow_major_version_upgrade_toggle_required=true`, `parameter_group_family_derived_by_module=true`, `replica_first_ordering=false` (no replicas)
+- a Jira `[System] Change` per tier, linked by `Blocks` for tier promotion (TEST -> QUALITY -> PROD)
