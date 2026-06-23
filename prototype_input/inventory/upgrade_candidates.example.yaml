@@ -79,7 +79,7 @@ assets:
       jira_ref: CLOPS-4563
       prototype_target_version: "18.4"
       execution_pattern: in_place_major_upgrade_via_terraform
-      iac_pinned_engine_version: "true"
+      iac_pinned_engine_version: true
       terraform_repo: PunchOut2Go/Terraform_Windmill
       terraform_path: environments/test/main.tf
       terraform_module: github.com/PunchOut2Go/Terraform_Modules.git//databases/postgres?ref=v1.3.8
