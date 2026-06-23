@@ -76,7 +76,8 @@ Use a Terraform-driven, in-place major version upgrade pattern for RDS instances
 ### 4. Apply stage
 - run `terraform init` and `terraform plan` from the environment directory; confirm the plan shows exactly the engine_version change, the `allow_major_version_upgrade` flip, the new parameter group create (`create_before_destroy`), the instance update with the new parameter group, and the old parameter group destroy
 - run `terraform apply`; do not exit the terminal until the apply completes
-- expected duration for single-instance major upgrade on small `db.t3` class instances is on the order of 10-20 minutes; larger classes scale accordingly
+- expected duration for single-instance major upgrade on small `db.t3` or `db.t4g` class instances is on the order of 10-20 minutes; larger classes scale accordingly
+- if the module does not set `apply_immediately = true` on `aws_db_instance` (provider default is `false`), expect the first apply to fail at the old parameter group destroy step. See `Known race conditions` below for the recognized symptom and resolution paths; the simplest is to run `aws rds modify-db-instance --db-instance-identifier <id> --apply-immediately --no-cli-pager`, wait for `available`, then re-run `terraform apply`
 
 ### 5. Validate stage
 - poll instance status with `describe-db-instances` until `DBInstanceStatus = available` and `EngineVersion = <target>`
@@ -89,6 +90,36 @@ Use a Terraform-driven, in-place major version upgrade pattern for RDS instances
 - post the validation evidence as a single, structured "Implementation Highlights" comment on the governing Jira `[System] Change` ticket
 - transition the Jira ticket to its resolved state with `resolution = Done`
 - if a tier-promotion ticket chain exists, link the next tier ticket via `Blocks`
+
+## Known race conditions
+
+### Parameter group destroy versus AWS deferred attachment swap (when `apply_immediately = false`)
+When the RDS module does not set `apply_immediately = true` on `aws_db_instance` (the AWS provider default is `false`), the major-upgrade apply can fail at the parameter group destroy step even though `aws_db_parameter_group` declares `create_before_destroy = true`.
+
+**Symptom.** `terraform apply` reports success for the new parameter group create and for the instance modify call, then fails when trying to destroy the old parameter group with a message similar to: `cannot delete because <pg-name> is in use`. The module `create_before_destroy = true` directive does not prevent this.
+
+**Root cause.** With `apply_immediately = false`, RDS responds to `ModifyDBInstance` with HTTP 200 and writes the requested values to `PendingModifiedValues`. The actual engine upgrade, instance class change, and parameter group attachment swap do not happen until the next maintenance window. Terraform considers its instance update step complete because AWS returned success, then proceeds to destroy the old parameter group. AWS rejects the destroy because the live attachment on the instance still points at the old parameter group.
+
+**Resolution paths.**
+- Re-apply after AWS finishes the deferred modification. Once the maintenance window runs or the modification is otherwise flushed, the instance live parameter group is the new one and the next `terraform apply` succeeds at the destroy step. This is what the CLOPS-4563 dispatch encountered.
+- Force the modification immediately between the two apply attempts:
+  ```bash
+  aws rds modify-db-instance \
+    --db-instance-identifier <db-instance-id> \
+    --apply-immediately \
+    --no-cli-pager
+  aws rds wait db-instance-available --db-instance-identifier <db-instance-id>
+  terraform apply
+  ```
+  This re-issues the in-flight pending modification with `--apply-immediately`, which causes AWS to start the change right away instead of waiting for the maintenance window.
+- Have the module set `apply_immediately = true` for the duration of the upgrade. Today the `databases/postgres` module does not expose `apply_immediately` on `aws_db_instance`, so this requires a module enhancement (a new variable, defaulted to `false`, surfaced as `apply_immediately = var.apply_immediately`). Once available, the upgrade PR can set it to `true`, and a follow-up PR can reset to `false` as a hardening step.
+
+**What not to do for this race.**
+- Do not delete the old parameter group manually via the CLI. The instance is still attached to it; AWS will reject the delete and the manual attempt adds no value.
+- Do not detach the old parameter group manually by re-issuing `modify-db-instance --db-parameter-group-name <new-pg>` without `--apply-immediately`. The same `ModifyDBInstance` was already issued by Terraform; reissuing without `--apply-immediately` does nothing useful, and reissuing with `--apply-immediately` is functionally equivalent to the second resolution path above but loses the framing that this is a TF-managed change.
+- Do not remove `create_before_destroy` on the module parameter group. It is the correct directive; the race is elsewhere.
+
+**How to recognize this race in CI logs.** The plan shows: create new `aws_db_parameter_group` (postgres<new-major>); update `aws_db_instance` (engine_version, instance_class, parameter_group_name, allow_major_version_upgrade); destroy old `aws_db_parameter_group` (postgres<old-major>). The apply log shows the first two steps complete in seconds and the destroy step fail with an `InvalidParameterCombination` or `InvalidDBParameterGroupState` error citing the live attachment.
 
 ## Backout
 - the only supported backout for a completed major upgrade is restore from the manual snapshot taken in stage 2 to a new instance, with a follow-up cutover plan

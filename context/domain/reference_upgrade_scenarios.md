@@ -157,3 +157,24 @@ The prototype should model this scenario as:
 - a routine-currency finding (not deadline-driven)
 - an `in_place_major_upgrade_via_terraform` execution pattern with `iac_pinned_engine_version=true`, `allow_major_version_upgrade_toggle_required=true`, `parameter_group_family_derived_by_module=true`, `replica_first_ordering=false` (no replicas)
 - a Jira `[System] Change` per tier, linked by `Blocks` for tier promotion (TEST -> QUALITY -> PROD)
+
+### Validation evidence
+```text
+Source version: 17.9
+Target version: 18.4 (valid IsMajorVersionUpgrade=true target confirmed via describe-db-engine-versions)
+Source instance class: db.t3.micro
+Target instance class: db.t4g.micro (x86 to Graviton; AWS-transparent for stock RDS extensions)
+Source parameter group: test-ops-windmill-us-east-2-postgres-01-postgres17
+Target parameter group: test-ops-windmill-us-east-2-postgres-01-postgres18 (in-sync, attached)
+Allow major version upgrade: false -> true
+Manual snapshot: skipped (TEST tier; AWS RDS auto-snapshot before major upgrade is the safety net)
+Validation date: 2026-06-23
+Validation context: AWS_PROFILE=test, account 226344076232, region us-east-2
+Governing PR: PunchOut2Go/Terraform_Windmill#59 (merged), deploy tag test-v1.0.5
+Deferred-modification race observed: yes (first apply failed at old parameter group destroy step because apply_immediately=false caused the AWS-side attachment swap to lag the Terraform-side instance update; recovered on retry after AWS completed the in-place modification)
+Post-upgrade state: DBInstanceStatus=available, EngineVersion=18.4, DBInstanceClass=db.t4g.micro, PendingModifiedValues={}, old parameter group destroyed
+```
+
+### Lessons learned (folded into SOP)
+- The `databases/postgres` module does not currently set `apply_immediately = true` on `aws_db_instance`. Combined with `create_before_destroy = true` on `aws_db_parameter_group`, this creates a deterministic race between Terraform-perceived instance update completion and AWS-side parameter group attachment swap. The first `terraform apply` of a major upgrade should be expected to fail at the old parameter group destroy step until either AWS finishes the deferred modification or the modification is flushed via `modify-db-instance --apply-immediately`.
+- The race is now documented in `plans/sop_in_place_major_upgrade_via_terraform_pattern.md` under `Known race conditions`, and Step 4 (Apply stage) cross-references it. A future module enhancement to expose `apply_immediately` as a variable would let the upgrade PR pre-empt the race without an out-of-band CLI step.
