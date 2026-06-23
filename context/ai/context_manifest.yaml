@@ -18,6 +18,7 @@ recommended_read_order:
   - plans/delivery_sequence.md
   - plans/sop_automation_pattern.md
   - plans/sop_in_place_minor_update_pattern.md
+  - plans/sop_in_place_major_upgrade_via_terraform_pattern.md
   - plans/open_questions.md
 
 constraints:

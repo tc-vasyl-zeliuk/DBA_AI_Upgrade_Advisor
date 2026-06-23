@@ -1,0 +1,42 @@
+scenario_id: postgres17-to-18-major-in-place-terraform-sop
+run_date: "2026-06-23"
+jira_ref: CLOPS-4563
+sop_ref: ../../plans/sop_in_place_major_upgrade_via_terraform_pattern.md
+asset_ref: ../inventory/upgrade_candidates.example.yaml#assets[3]
+source_policy_ref: ../lifecycle/lifecycle_policies.example.yaml#policies[0]
+expected_assessment:
+  assessment_type: routine_currency_major_upgrade
+  support_phase: standard_support
+  lifecycle_urgency: low
+  patch_hygiene_urgency: low
+  execution_pattern: in_place_major_upgrade_via_terraform
+  preferred_cutover_method: terraform_apply
+  apply_immediately: true
+  replica_first_ordering: false
+  terraform_change_required: true
+  iac_pinned_engine_version: true
+  allow_major_version_upgrade_toggle_required: true
+  parameter_group_family_derived_by_module: true
+  source_engine_version: "17.9"
+  target_engine_version: "18.4"
+  must_include_findings:
+    - validate_valid_upgrade_target_is_major
+    - confirm_engine_version_pinned_in_terraform
+    - require_allow_major_version_upgrade_true_in_same_pr
+    - confirm_module_derives_parameter_group_family_from_major
+    - take_manual_pre_upgrade_snapshot_regardless_of_tier
+    - require_pr_merged_before_terraform_apply
+    - confirm_dbinstancestatus_available_post_upgrade
+    - confirm_engine_version_matches_target_post_upgrade
+    - confirm_new_parameter_group_attached_and_in_sync
+    - verify_select_version_returns_target
+    - confirm_terraform_plan_is_no_op_post_apply
+    - capture_validation_evidence_on_jira_ticket
+  excluded_findings:
+    - blue_green_deployment_create
+    - manual_parameter_group_create
+    - cli_modify_db_instance_engine_version
+  optional_findings_for_prod:
+    - reset_allow_major_version_upgrade_to_false_post_upgrade
+    - schedule_change_window_with_application_owners
+    - coordinate_extension_alter_extension_update_with_app_team
